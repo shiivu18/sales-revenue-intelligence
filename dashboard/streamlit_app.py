@@ -316,6 +316,7 @@ def render_kpi(label: str, value: str, delta: str = "", delta_type: str = "neu")
 
 # Define the master column split based on user mockup architecture
 col_nav, col_main = st.columns([1.2, 4], gap="large")
+
 # ------------------------------------------------------------
 # 1. LEFT COLUMN: Fixed Control Panel (Command Center)
 # ------------------------------------------------------------
@@ -325,14 +326,7 @@ with col_nav:
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
             Sales Intel
         </div>
-        
-        <div class="premium-signature">
-            <div class="sig-avatar">SN</div>
-            <div class="sig-text-block">
-                <div class="sig-label">Built by</div>
-                <div class="sig-name">Shiivu.n</div>
-            </div>
-        </div>
+        <div class="panel-subtitle">COMMAND CENTER</div>
     """, unsafe_allow_html=True)
 
     nav_pages = ["Executive Overview", "Customer Intelligence", "Churn Prediction", "Revenue Forecast"]
@@ -347,7 +341,22 @@ with col_nav:
     # Global Parameters Section within fixed panel
     st.markdown('<div class="parameter-heading">Global Parameters</div>', unsafe_allow_html=True)
 
-    # ... (rest of your filters stay exactly the same)
+    all_years = sorted(orders["order_year"].unique())
+    all_regions = sorted(orders["region"].unique())
+    all_segments = sorted(orders["segment"].unique())
+
+    sel_years = st.multiselect("Fiscal Year", all_years, default=all_years)
+    sel_regions = st.multiselect("Geographic Region", all_regions, default=all_regions)
+    sel_segments = st.multiselect("Customer Segment", all_segments, default=all_segments)
+
+    # Process Filters
+    mask = (
+        orders["order_year"].isin(sel_years) &
+        orders["region"].isin(sel_regions) &
+        orders["segment"].isin(sel_segments)
+    )
+    df = orders[mask].copy()
+
 
 # ------------------------------------------------------------
 # 2. RIGHT COLUMN: Main Content & Dynamic Intel Panels
