@@ -1,14 +1,8 @@
 # ============================================================
-# Sales & Revenue Intelligence Platform
-# Phase 4 — Streamlit Dashboard
+# Sales & Revenue Intelligence Platform - FIXED VERSION
 # ============================================================
-# Pages:
-#   1. Executive Overview    — KPIs, revenue trend, category mix
-#   2. Customer Intelligence — RFM segments, top customers
-#   3. Churn Prediction      — risk tiers, actionable customer list
-#   4. Revenue Forecast      — actuals vs forecast, trend analysis
-#
-# Run with:  streamlit run dashboard/streamlit_app.py
+# Fixed navigation with clear page switching
+# Run with:  streamlit run streamlit_dashboard_fixed.py
 # ============================================================
 
 import sqlite3
@@ -60,6 +54,35 @@ st.markdown("""
     section[data-testid="stSidebar"] {
         background-color: #161b27;
         border-right: 1px solid #252d3d;
+    }
+
+    /* Make radio buttons more visible */
+    .stRadio > label {
+        color: #e8eaf0 !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+    }
+    
+    .stRadio > div {
+        gap: 8px !important;
+    }
+    
+    .stRadio > div > label {
+        background-color: #1a2035 !important;
+        padding: 12px 16px !important;
+        border-radius: 8px !important;
+        border: 1px solid #252d3d !important;
+        cursor: pointer !important;
+        transition: all 0.2s !important;
+    }
+    
+    .stRadio > div > label:hover {
+        background-color: #1e2840 !important;
+        border-color: #4f6ef7 !important;
+    }
+    
+    .stRadio > div > label[data-baseweb="radio"] > div:first-child {
+        background-color: #4f6ef7 !important;
     }
 
     /* KPI cards */
@@ -134,14 +157,15 @@ st.markdown("""
     /* Data table */
     .stDataFrame { border-radius: 8px; overflow: hidden; }
 
-    /* Segment pills */
-    .seg-champions    { color:#34d399; font-weight:600; }
-    .seg-loyal        { color:#60a5fa; font-weight:600; }
-    .seg-highvalue    { color:#a78bfa; font-weight:600; }
-    .seg-lost         { color:#f87171; font-weight:600; }
-
-    /* Plotly chart background override */
-    .js-plotly-plot .plotly { border-radius: 10px; }
+    /* Current page indicator */
+    .current-page {
+        font-size: 18px;
+        font-weight: 700;
+        color: #4f6ef7;
+        padding: 12px 0;
+        border-bottom: 2px solid #4f6ef7;
+        margin-bottom: 20px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -218,23 +242,35 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
+    # IMPROVED NAVIGATION - More obvious
+    st.markdown("### 📑 Navigate")
+    
+    # Initialize session state for page if not exists
+    if 'current_page' not in st.session_state:
+        st.session_state.current_page = "Executive Overview"
+    
+    # Page selection with clear labels
     page = st.radio(
-        "Navigate",
+        "Select Page:",
         ["Executive Overview", "Customer Intelligence", "Churn Prediction", "Revenue Forecast"],
-        label_visibility="collapsed",
+        index=["Executive Overview", "Customer Intelligence", "Churn Prediction", "Revenue Forecast"].index(st.session_state.current_page),
+        key="page_selector"
     )
+    
+    # Update session state
+    st.session_state.current_page = page
 
     st.markdown("<hr style='border-color:#252d3d;margin:16px 0;'>", unsafe_allow_html=True)
     st.markdown("<div style='font-size:11px;color:#6b7a99;letter-spacing:1px;font-weight:600;margin-bottom:10px;'>GLOBAL FILTERS</div>", unsafe_allow_html=True)
 
     all_years = sorted(orders["order_year"].unique())
-    sel_years = st.multiselect("Year", all_years, default=all_years)
+    sel_years = st.multiselect("Year", all_years, default=all_years, key="year_filter")
 
     all_regions = sorted(orders["region"].unique())
-    sel_regions = st.multiselect("Region", all_regions, default=all_regions)
+    sel_regions = st.multiselect("Region", all_regions, default=all_regions, key="region_filter")
 
     all_segments = sorted(orders["segment"].unique())
-    sel_segments = st.multiselect("Segment", all_segments, default=all_segments)
+    sel_segments = st.multiselect("Segment", all_segments, default=all_segments, key="segment_filter")
 
     st.markdown("<hr style='border-color:#252d3d;margin:16px 0;'>", unsafe_allow_html=True)
     st.markdown(f"""
@@ -268,6 +304,12 @@ def kpi(label: str, value: str, delta: str = "", delta_type: str = "neu"):
     </div>
     """, unsafe_allow_html=True)
 
+
+# ============================================================
+# SHOW CURRENT PAGE INDICATOR
+# ============================================================
+
+st.markdown(f'<div class="current-page">📍 Current Page: {page}</div>', unsafe_allow_html=True)
 
 # ============================================================
 # PAGE 1 — EXECUTIVE OVERVIEW
@@ -718,3 +760,10 @@ elif page == "Revenue Forecast":
         mom_display.sort_values("Month", ascending=False).head(24),
         use_container_width=True, hide_index=True
     )
+
+# ============================================================
+# FOOTER - Always show which page we're on
+# ============================================================
+
+st.markdown("---")
+st.markdown(f"**Currently viewing:** {page} | **Filters active:** Years={len(sel_years)}, Regions={len(sel_regions)}, Segments={len(sel_segments)}")
